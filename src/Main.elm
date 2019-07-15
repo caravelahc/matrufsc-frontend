@@ -1,6 +1,6 @@
 module Main exposing (Model, Msg(..), init, main, update, view)
 
-import Api exposing (ApiResponse(..), Class, Course, fetchCourses)
+import Api exposing (ApiResponse(..), Class, Course)
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -17,48 +17,143 @@ main =
 
 
 type alias Model =
-    { semester : Maybe String
-    , campus : Maybe String
-    , courses : List Course
-    , classes : List Class
+    { availableSemesters : List String
+    , selectedSemester : Maybe String
+    , availableCampi : List String
+    , selectedCampus : Maybe String
+    , availableCourses : List Course
+    , selectedCourse : Maybe Course
+    , availableClasses : List Class
     , selectedClass : Maybe Class
     }
 
 
+type Msg
+    = GotApiResponse ApiResponse
+    | SelectSemester String
+    | SelectCampus String
+    | ChangeCourseQuery String
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( Model
-        Nothing
-        Nothing
-        []
-        []
-        Nothing
-    , Cmd.map (\c -> ApiResponse c) (fetchCourses (Just "FLO") (Just "20192"))
+    ( { availableSemesters = []
+      , selectedSemester = Nothing
+      , availableCampi = []
+      , selectedCampus = Nothing
+      , availableCourses = []
+      , selectedCourse = Nothing
+      , availableClasses = []
+      , selectedClass = Nothing
+      }
+    , Cmd.batch
+        [ Cmd.map (\c -> GotApiResponse c) Api.fetchSemesters
+        , Cmd.map (\c -> GotApiResponse c) Api.fetchCampi
+        ]
     )
-
-
-type Msg
-    = ApiResponse ApiResponse
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ApiResponse response ->
+        GotApiResponse response ->
             case response of
+                GotSemesters result ->
+                    ( { model | availableSemesters = Result.withDefault [] result }
+                    , Cmd.none
+                    )
+
+                GotCampi result ->
+                    ( { model | availableCampi = Result.withDefault [] result }
+                    , Cmd.none
+                    )
+
                 GotCourses result ->
-                    ( { model | courses = Result.withDefault [] result }, Cmd.none )
+                    ( { model | availableCourses = Result.withDefault [] result }
+                    , Cmd.none
+                    )
 
                 GotClasses result ->
-                    ( { model | classes = Result.withDefault [] result }, Cmd.none )
+                    ( { model | availableClasses = Result.withDefault [] result }
+                    , Cmd.none
+                    )
+
+        SelectSemester s ->
+            let
+                semester =
+                    if s == "" then
+                        Nothing
+
+                    else
+                        Just s
+            in
+            ( { model | selectedSemester = semester }
+            , Cmd.map GotApiResponse
+                (Api.fetchCourses semester model.selectedCampus)
+            )
+
+        SelectCampus c ->
+            let
+                campus =
+                    if c == "" then
+                        Nothing
+
+                    else
+                        Just c
+            in
+            ( { model | selectedCampus = campus }
+            , Cmd.map GotApiResponse
+                (Api.fetchCourses model.selectedSemester campus)
+            )
+
+        ChangeCourseQuery query ->
+            case
+                List.head
+                    (List.filter
+                        (\c -> query == viewCourse c)
+                        model.availableCourses
+                    )
+            of
+                Just course ->
+                    ( { model | selectedCourse = Just course }
+                    , Cmd.map GotApiResponse
+                        (Api.fetchClasses course.id model.selectedSemester)
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+
+viewCourse : Course -> String
+viewCourse course =
+    course.id ++ " - " ++ course.name
 
 
 view : Model -> Html Msg
 view model =
+    let
+        opt s =
+            option [ value s ] [ text s ]
+
+        semesterSelector =
+            select [ onInput SelectSemester ]
+                (List.map opt ("" :: model.availableSemesters))
+
+        campusSelector =
+            select [ onInput SelectCampus ]
+                (List.map opt ("" :: model.availableCampi))
+
+        courseSearchField =
+            input [ list "courses", onInput ChangeCourseQuery ]
+                [ datalist [ id "courses" ]
+                    (List.map (opt << viewCourse) model.availableCourses)
+                ]
+
+        classesList =
+            List.map (\c -> p [] [ text c.id ]) model.availableClasses
+    in
     div []
-        [ input [ list "courses" ] []
-        , datalist [ id "courses" ] <|
-            List.map
-                (\c -> option [ value (c.id ++ " - " ++ c.name) ] [])
-                model.courses
+        [ p [] [ semesterSelector, campusSelector ]
+        , courseSearchField
+        , div [] classesList
         ]

@@ -1,4 +1,4 @@
-module Api exposing (ApiResponse(..), Class, ClassID, Course, CourseID, classDecoder, courseDecoder, fetchClasses, fetchCourses)
+module Api exposing (ApiResponse(..), Class, ClassID, Course, CourseID, classDecoder, courseDecoder, fetchCampi, fetchClasses, fetchCourses, fetchSemesters, maybeParameter)
 
 import Http
 import Json.Decode as D exposing (Decoder)
@@ -10,8 +10,30 @@ import Url.Builder exposing (QueryParameter, crossOrigin)
 
 
 type ApiResponse
-    = GotCourses (Result Http.Error (List Course))
+    = GotSemesters (Result Http.Error (List String))
+    | GotCampi (Result Http.Error (List String))
+    | GotCourses (Result Http.Error (List Course))
     | GotClasses (Result Http.Error (List Class))
+
+
+fetchSemesters : Cmd ApiResponse
+fetchSemesters =
+    Http.get
+        { url =
+            -- absolute [ "semesters" ] []
+            crossOrigin "http://localhost:8080" [ "semesters" ] []
+        , expect = Http.expectJson GotSemesters (D.list D.string)
+        }
+
+
+fetchCampi : Cmd ApiResponse
+fetchCampi =
+    Http.get
+        { url =
+            -- absolute [ "campi" ] []
+            crossOrigin "http://localhost:8080" [ "campi" ] []
+        , expect = Http.expectJson GotCampi (D.list D.string)
+        }
 
 
 maybeParameter : String -> Maybe String -> List QueryParameter
@@ -45,19 +67,18 @@ courseDecoder =
 
 
 fetchCourses : Maybe String -> Maybe String -> Cmd ApiResponse
-fetchCourses campus semester =
+fetchCourses semester campus =
     let
         parameters =
             List.concat
-                [ maybeParameter "campus" campus
-                , maybeParameter "semester" semester
+                [ maybeParameter "semester" semester
+                , maybeParameter "campus" campus
                 ]
     in
     Http.get
         { url =
+            -- absolute [ "courses" ] parameters
             crossOrigin "http://localhost:8080" [ "courses" ] parameters
-
-        -- absolute [ "courses" ] parameters
         , expect = Http.expectJson GotCourses (D.list courseDecoder)
         }
 
@@ -101,8 +122,7 @@ fetchClasses courseId semester =
     in
     Http.get
         { url =
+            -- absolute [ "classes" ] parameters
             crossOrigin "http://localhost:8080" [ "classes" ] parameters
-
-        -- absolute [ "classes" ] parameters
         , expect = Http.expectJson GotClasses (D.list classDecoder)
         }
