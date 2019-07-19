@@ -22,6 +22,7 @@ type alias Model =
     , availableCampi : List String
     , selectedCampus : Maybe String
     , availableCourses : List Course
+    , courseSearchAvailable : Bool
     , selectedCourse : Maybe Course
     , availableClasses : List Class
     , selectedClass : Maybe Class
@@ -42,6 +43,7 @@ init =
       , availableCampi = []
       , selectedCampus = Nothing
       , availableCourses = []
+      , courseSearchAvailable = True
       , selectedCourse = Nothing
       , availableClasses = []
       , selectedClass = Nothing
@@ -69,7 +71,10 @@ update msg model =
                     )
 
                 GotCourses result ->
-                    ( { model | availableCourses = Result.withDefault [] result }
+                    ( { model
+                        | availableCourses = Result.withDefault [] result
+                        , courseSearchAvailable = True
+                      }
                     , Cmd.none
                     )
 
@@ -87,7 +92,10 @@ update msg model =
                     else
                         Just s
             in
-            ( { model | selectedSemester = semester }
+            ( { model
+                | selectedSemester = semester
+                , courseSearchAvailable = False
+              }
             , Cmd.map GotApiResponse
                 (Api.fetchCourses semester model.selectedCampus)
             )
@@ -101,7 +109,10 @@ update msg model =
                     else
                         Just c
             in
-            ( { model | selectedCampus = campus }
+            ( { model
+                | selectedCampus = campus
+                , courseSearchAvailable = False
+              }
             , Cmd.map GotApiResponse
                 (Api.fetchCourses model.selectedSemester campus)
             )
@@ -136,15 +147,25 @@ view model =
             option [ value s ] [ text s ]
 
         semesterSelector =
-            select [ onInput SelectSemester ]
+            select
+                [ onInput SelectSemester
+                , disabled (List.isEmpty model.availableSemesters)
+                ]
                 (List.map opt ("" :: model.availableSemesters))
 
         campusSelector =
-            select [ onInput SelectCampus ]
+            select
+                [ onInput SelectCampus
+                , disabled (List.isEmpty model.availableCampi)
+                ]
                 (List.map opt ("" :: model.availableCampi))
 
         courseSearchField =
-            input [ list "courses", onInput ChangeCourseQuery ]
+            input
+                [ list "courses"
+                , disabled (not model.courseSearchAvailable)
+                , onInput ChangeCourseQuery
+                ]
                 [ datalist [ id "courses" ]
                     (List.map (opt << viewCourse) model.availableCourses)
                 ]
