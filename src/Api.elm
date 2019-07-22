@@ -1,12 +1,14 @@
-module Api exposing (ApiResponse(..), Class, ClassID, Course, CourseID, classDecoder, courseDecoder, fetchCampi, fetchClasses, fetchCourses, fetchSemesters, maybeParameter)
+module Api exposing (ApiResponse(..), Class, ClassID, Course, CourseID, classDecoder, courseDecoder, fetchCampi, fetchClasses, fetchCourses, fetchSemesters, maybeParam)
 
 import Http
 import Json.Decode as D exposing (Decoder)
-import Url.Builder exposing (QueryParameter, crossOrigin)
+import Url.Builder exposing (QueryParameter, absolute, crossOrigin)
 
 
-
--- import Url.Builder exposing (QueryParameter, absolute)
+endpointUrl : String -> List QueryParameter -> String
+endpointUrl endpoint parameters =
+    -- absolute [ endpoint ] parameters
+    crossOrigin "http://localhost:8080" [ endpoint ] parameters
 
 
 type ApiResponse
@@ -19,9 +21,7 @@ type ApiResponse
 fetchSemesters : Cmd ApiResponse
 fetchSemesters =
     Http.get
-        { url =
-            -- absolute [ "semesters" ] []
-            crossOrigin "http://localhost:8080" [ "semesters" ] []
+        { url = endpointUrl "semesters" []
         , expect = Http.expectJson GotSemesters (D.list D.string)
         }
 
@@ -29,15 +29,13 @@ fetchSemesters =
 fetchCampi : Cmd ApiResponse
 fetchCampi =
     Http.get
-        { url =
-            -- absolute [ "campi" ] []
-            crossOrigin "http://localhost:8080" [ "campi" ] []
+        { url = endpointUrl "campi" []
         , expect = Http.expectJson GotCampi (D.list D.string)
         }
 
 
-maybeParameter : String -> Maybe String -> List QueryParameter
-maybeParameter key value =
+maybeParam : String -> Maybe String -> List QueryParameter
+maybeParam key value =
     case value of
         Just v ->
             [ Url.Builder.string key v ]
@@ -70,15 +68,10 @@ fetchCourses : Maybe String -> Maybe String -> Cmd ApiResponse
 fetchCourses semester campus =
     let
         parameters =
-            List.concat
-                [ maybeParameter "semester" semester
-                , maybeParameter "campus" campus
-                ]
+            maybeParam "semester" semester ++ maybeParam "campus" campus
     in
     Http.get
-        { url =
-            -- absolute [ "courses" ] parameters
-            crossOrigin "http://localhost:8080" [ "courses" ] parameters
+        { url = endpointUrl "courses" parameters
         , expect = Http.expectJson GotCourses (D.list courseDecoder)
         }
 
@@ -117,12 +110,9 @@ fetchClasses : CourseID -> Maybe String -> Cmd ApiResponse
 fetchClasses courseId semester =
     let
         parameters =
-            Url.Builder.string "course_id" courseId
-                :: maybeParameter "semester" semester
+            Url.Builder.string "course_id" courseId :: maybeParam "semester" semester
     in
     Http.get
-        { url =
-            -- absolute [ "classes" ] parameters
-            crossOrigin "http://localhost:8080" [ "classes" ] parameters
+        { url = endpointUrl "classes" parameters
         , expect = Http.expectJson GotClasses (D.list classDecoder)
         }
