@@ -1,4 +1,4 @@
-module Api exposing (ApiResponse(..), Class, ClassID, Course, CourseID, classDecoder, courseDecoder, fetchCampi, fetchClasses, fetchCourses, fetchSemesters, maybeParam)
+module Main exposing (ApiResponse(..), Class, ClassID, Course, CourseID, Slot(..), SlotParseError(..), TimePlace, WeekDay(..), WeekDayParseError(..), classDecoder, courseDecoder, endpointUrl, fetchCampi, fetchClasses, fetchCourses, fetchSemesters, maybeParam, slotDecoder, slotFromString, timePlaceDecoder, weekDayDecoder, weekDayFromInt)
 
 import Http
 import Json.Decode as D exposing (Decoder)
@@ -80,6 +80,159 @@ type alias ClassID =
     String
 
 
+type WeekDay
+    = Monday
+    | Tuesday
+    | Wednesday
+    | Thursday
+    | Friday
+    | Saturday
+    | Sunday
+
+
+type WeekDayParseError
+    = WeekDayOutOfRange
+
+
+weekDayFromInt : Int -> Result WeekDayParseError WeekDay
+weekDayFromInt i =
+    case i of
+        0 ->
+            Ok Monday
+
+        1 ->
+            Ok Tuesday
+
+        2 ->
+            Ok Wednesday
+
+        3 ->
+            Ok Thursday
+
+        4 ->
+            Ok Friday
+
+        5 ->
+            Ok Saturday
+
+        6 ->
+            Ok Sunday
+
+        _ ->
+            Err WeekDayOutOfRange
+
+
+weekDayDecoder : Decoder WeekDay
+weekDayDecoder =
+    D.andThen
+        (\i ->
+            case weekDayFromInt i of
+                Ok w ->
+                    D.succeed w
+
+                Err WeekDayOutOfRange ->
+                    D.fail ("Weekday out of range (" ++ String.fromInt i ++ ")")
+        )
+        D.int
+
+
+type Slot
+    = S0730
+    | S0820
+    | S0910
+    | S1010
+    | S1100
+    | S1330
+    | S1420
+    | S1510
+    | S1620
+    | S1710
+    | S1830
+    | S1920
+    | S2020
+    | S2110
+
+
+type SlotParseError
+    = InvalidSlot
+
+
+slotFromString : String -> Result SlotParseError Slot
+slotFromString s =
+    case s of
+        "0730" ->
+            Ok S0730
+
+        "0820" ->
+            Ok S0820
+
+        "0910" ->
+            Ok S0910
+
+        "1010" ->
+            Ok S1010
+
+        "1100" ->
+            Ok S1100
+
+        "1330" ->
+            Ok S1330
+
+        "1420" ->
+            Ok S1420
+
+        "1510" ->
+            Ok S1510
+
+        "1620" ->
+            Ok S1620
+
+        "1710" ->
+            Ok S1710
+
+        "1830" ->
+            Ok S1830
+
+        "1920" ->
+            Ok S1920
+
+        "2020" ->
+            Ok S2020
+
+        "2110" ->
+            Ok S2110
+
+        _ ->
+            Err InvalidSlot
+
+
+slotDecoder : Decoder Slot
+slotDecoder =
+    D.andThen
+        (\s ->
+            case slotFromString s of
+                Ok slot ->
+                    D.succeed slot
+
+                Err InvalidSlot ->
+                    D.fail ("Invalid slot (" ++ s ++ ")")
+        )
+        D.string
+
+
+type alias TimePlace =
+    { weekday : WeekDay, slots : List Slot, room : String }
+
+
+timePlaceDecoder : Decoder TimePlace
+timePlaceDecoder =
+    D.map3
+        TimePlace
+        (D.field "weekday" weekDayDecoder)
+        (D.field "slots" (D.list slotDecoder))
+        (D.field "room" D.string)
+
+
 type alias Class =
     { id : ClassID
     , labels : List String
@@ -87,7 +240,7 @@ type alias Class =
     , enrolled : Int
     , special : Int
     , waiting : Maybe Int
-    , times : List String
+    , times_and_places : List TimePlace
     , professors : List String
     }
 
@@ -96,13 +249,13 @@ classDecoder : Decoder Class
 classDecoder =
     D.map8
         Class
-        (D.field "class_id" D.string)
-        (D.field "class_labels" (D.list D.string))
+        (D.field "id" D.string)
+        (D.field "labels" (D.list D.string))
         (D.field "capacity" D.int)
         (D.field "enrolled" D.int)
         (D.field "special" D.int)
         (D.field "waiting" (D.nullable D.int))
-        (D.field "times" (D.list D.string))
+        (D.field "times_and_places" (D.list timePlaceDecoder))
         (D.field "professors" (D.list D.string))
 
 
