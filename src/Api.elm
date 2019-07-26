@@ -1,4 +1,28 @@
-module Main exposing (ApiResponse(..), Class, ClassID, Course, CourseID, Slot(..), SlotParseError(..), TimePlace, WeekDay(..), WeekDayParseError(..), classDecoder, courseDecoder, endpointUrl, fetchCampi, fetchClasses, fetchCourses, fetchSemesters, maybeParam, slotDecoder, slotFromString, timePlaceDecoder, weekDayDecoder, weekDayFromInt)
+module Main exposing
+    ( ApiResponse(..)
+    , Class
+    , ClassID
+    , Course
+    , CourseID
+    , Slot(..)
+    , SlotParseError(..)
+    , TimePlace
+    , WeekDay(..)
+    , WeekDayParseError(..)
+    , classDecoder
+    , courseDecoder
+    , endpointUrl
+    , fetchCampi
+    , fetchClasses
+    , fetchCourses
+    , fetchSemesters
+    , maybeParam
+    , slotDecoder
+    , slotFromString
+    , timePlaceDecoder
+    , weekDayDecoder
+    , weekDayFromInt
+    )
 
 import Http
 import Json.Decode as D exposing (Decoder)
