@@ -1,1 +1,4 @@
 elm-stuff
+repl-temp-*
+*.html
+*.js
