@@ -140,6 +140,33 @@ viewCourse course =
     course.id ++ " - " ++ course.name
 
 
+schoolDays =
+    [ "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado" ]
+
+
+timeSlots =
+    [ "07:30"
+    , "08:20"
+    , "09:10"
+    , "10:10"
+    , "11:00"
+    , "13:30"
+    , "14:20"
+    , "15:10"
+    , "16:20"
+    , "17:10"
+    , "18:30"
+    , "19:20"
+    , "20:20"
+    , "21:10"
+    ]
+
+
+toTableHeader : String -> Html Msg
+toTableHeader item =
+    th [] [ text item ]
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -172,9 +199,29 @@ view model =
 
         classesList =
             List.map (\c -> p [] [ text c.id ]) model.availableClasses
+
+        mainGridHeader =
+            tr []
+                (List.append
+                    [ tr [] [ text "" ] ]
+                    (List.map
+                        (\d -> th [] [ text d ])
+                        schoolDays
+                    )
+                )
+
+        mainGridTimeSlots =
+            tr [] (List.map (\t -> tr [] [ text t ]) timeSlots)
+
+        mainGrid =
+            table []
+                [ mainGridHeader
+                , mainGridTimeSlots
+                ]
     in
     div []
         [ p [] [ semesterSelector, campusSelector ]
         , courseSearchField
         , div [] classesList
+        , div [] [ mainGrid ]
         ]
