@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), init, main, update, view)
+module Main exposing (Model, Msg(..), init, main, schoolDays, timeSlots, toTableHeader, update, view, viewCourse)
 
 import Api exposing (ApiResponse(..), Class, Course)
 import Browser

@@ -1,4 +1,5 @@
 elm-stuff
 repl-temp-*
 *.html
+!index.html
 *.js
