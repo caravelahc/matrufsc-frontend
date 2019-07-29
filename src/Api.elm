@@ -26,7 +26,7 @@ module Api exposing
 
 import Http
 import Json.Decode as D exposing (Decoder)
-import Url.Builder exposing (QueryParameter, absolute, crossOrigin)
+import Url.Builder exposing (QueryParameter, crossOrigin)
 
 
 endpointUrl : String -> List QueryParameter -> String
@@ -245,7 +245,10 @@ slotDecoder =
 
 
 type alias TimePlace =
-    { weekday : WeekDay, slots : List Slot, room : String }
+    { weekday : WeekDay
+    , slots : List Slot
+    , room : String
+    }
 
 
 timePlaceDecoder : Decoder TimePlace

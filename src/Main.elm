@@ -2,11 +2,13 @@ module Main exposing (Model, Msg(..), init, main, schoolDays, timeSlots, toTable
 
 import Api exposing (ApiResponse(..), Class, Course)
 import Browser
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Html exposing (Html, datalist, div, input, option, p, select, table, text, th, tr)
+import Html.Attributes exposing (disabled, id, list, value)
+import Html.Events exposing (onInput)
+import Platform exposing (Program)
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = \() -> init
@@ -140,10 +142,12 @@ viewCourse course =
     course.id ++ " - " ++ course.name
 
 
+schoolDays : List String
 schoolDays =
     [ "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado" ]
 
 
+timeSlots : List String
 timeSlots =
     [ "07:30"
     , "08:20"
