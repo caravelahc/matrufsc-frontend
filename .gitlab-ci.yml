@@ -7,15 +7,18 @@ stages:
 analyse:
   stage: check
   script:
+    - elm-format --validate
     - elm-analyse
 
 build:
   stage: check
   script:
-    - elm make src/Main.elm --output=index.html
+    - elm make src/Main.elm --optimize --output=main.js
+    - uglifyjs main.js --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output=main.min.js
   artifacts:
     paths:
-      - index.html
+      - main.js
+      - main.min.js
 
 deploy:
   stage: deploy
@@ -31,4 +34,4 @@ deploy:
     - git remote add github ${REMOTE_URL}
     - git add -A
     - 'git commit -m "[ci-skip] Deploy GitHub Pages ${CI_JOB_NAME}-${CI_COMMIT_SHORT_SHA}" -m "Deploy from GitLab pipeline ${CI_COMMIT_SHA}"'
-    - git push github gh-pages --force
+    - git push github gh-pages
