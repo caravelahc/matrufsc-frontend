@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), init, main, schoolDays, timeSlots, toTableHeader, update, view, viewCourse)
+module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Api exposing (ApiResponse(..), Class, Course)
 import Browser
@@ -6,6 +6,7 @@ import Html exposing (Html, datalist, div, input, option, p, select, table, text
 import Html.Attributes exposing (disabled, id, list, value)
 import Html.Events exposing (onInput)
 import Platform exposing (Program)
+import Utils exposing (courseToString, schoolDays, timeSlots)
 
 
 main : Program () Model Msg
@@ -123,7 +124,7 @@ update msg model =
             case
                 List.head
                     (List.filter
-                        (\c -> query == viewCourse c)
+                        (\c -> query == courseToString c)
                         model.availableCourses
                     )
             of
@@ -135,40 +136,6 @@ update msg model =
 
                 Nothing ->
                     ( model, Cmd.none )
-
-
-viewCourse : Course -> String
-viewCourse course =
-    course.id ++ " - " ++ course.name
-
-
-schoolDays : List String
-schoolDays =
-    [ "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado" ]
-
-
-timeSlots : List String
-timeSlots =
-    [ "07:30"
-    , "08:20"
-    , "09:10"
-    , "10:10"
-    , "11:00"
-    , "13:30"
-    , "14:20"
-    , "15:10"
-    , "16:20"
-    , "17:10"
-    , "18:30"
-    , "19:20"
-    , "20:20"
-    , "21:10"
-    ]
-
-
-toTableHeader : String -> Html Msg
-toTableHeader item =
-    th [] [ text item ]
 
 
 view : Model -> Html Msg
@@ -198,7 +165,7 @@ view model =
                 , onInput ChangeCourseQuery
                 ]
                 [ datalist [ id "courses" ]
-                    (List.map (opt << viewCourse) model.availableCourses)
+                    (List.map (opt << courseToString) model.availableCourses)
                 ]
 
         classesList =
