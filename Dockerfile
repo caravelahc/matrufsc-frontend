@@ -7,4 +7,6 @@ RUN apk add --no-cache \
     npm \
     && npm install -g --unsafe-perm \
     elm \
-    elm-analyse
+    elm-analyse \
+    elm-format \
+    uglify-js
