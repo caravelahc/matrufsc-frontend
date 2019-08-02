@@ -1,6 +1,6 @@
-module Utils exposing (courseToString, schoolDays, timeSlots)
+module Utils exposing (classToOccupiedString, courseToString, schoolDays, selectableClassHeader, timeSlots)
 
-import Api exposing (Course)
+import Api exposing (Class, Course)
 
 
 schoolDays : List String
@@ -27,6 +27,26 @@ timeSlots =
     ]
 
 
+selectableClassHeader : List String
+selectableClassHeader =
+    [ "Turma", "Vagas Ocupadas", "Professores" ]
+
+
 courseToString : Course -> String
 courseToString course =
     course.id ++ " - " ++ course.name
+
+
+classToOccupiedString : Class -> String
+classToOccupiedString c =
+    "("
+        ++ String.fromInt c.enrolled
+        ++ (case c.waiting of
+                Nothing ->
+                    ""
+
+                Just int ->
+                    "+" ++ String.fromInt int
+           )
+        ++ ")/"
+        ++ String.fromInt c.capacity
