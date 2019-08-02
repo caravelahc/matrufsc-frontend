@@ -1,6 +1,7 @@
-module Utils exposing (classToOccupiedString, courseToString, schoolDays, selectableClassHeader, timeSlots)
+module Utils exposing (classToOccupiedString, courseToString, schoolDays, selectableClassHeader, timePlaceListToString, timeSlots)
 
-import Api exposing (Class, Course)
+import Api exposing (Class, Course, TimePlace)
+import List.Extra exposing (unique)
 
 
 schoolDays : List String
@@ -29,7 +30,7 @@ timeSlots =
 
 selectableClassHeader : List String
 selectableClassHeader =
-    [ "Turma", "Vagas Ocupadas", "Professores" ]
+    [ "Turma", "Vagas Ocupadas", "Professores", "Salas" ]
 
 
 courseToString : Course -> String
@@ -50,3 +51,8 @@ classToOccupiedString c =
            )
         ++ ")/"
         ++ String.fromInt c.capacity
+
+
+timePlaceListToString : List TimePlace -> String
+timePlaceListToString l =
+    String.join "\n" (unique (List.map (\timeplace -> timeplace.room) l))

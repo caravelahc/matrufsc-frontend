@@ -6,7 +6,7 @@ import Html exposing (Html, datalist, div, input, option, p, select, table, td, 
 import Html.Attributes exposing (disabled, id, list, value)
 import Html.Events exposing (onInput)
 import Platform exposing (Program)
-import Utils exposing (classToOccupiedString, courseToString, schoolDays, selectableClassHeader, timeSlots)
+import Utils exposing (classToOccupiedString, courseToString, schoolDays, selectableClassHeader, timePlaceListToString, timeSlots)
 
 
 main : Program () Model Msg
@@ -178,6 +178,7 @@ view model =
                         [ td [] [ text class.id ]
                         , td [] [ text (classToOccupiedString class) ]
                         , td [] [ text (String.join "\n" class.professors) ]
+                        , td [] [ text (timePlaceListToString class.times_and_places) ]
                         ]
                 )
                 model.availableClasses
