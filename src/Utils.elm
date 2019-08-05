@@ -1,6 +1,14 @@
-module Utils exposing (classToOccupiedString, courseToString, schoolDays, selectableClassHeader, timePlaceListToString, timeSlots)
+module Utils exposing
+    ( classToOccupiedString
+    , courseToString
+    , schoolDays
+    , selectableClassHeader
+    , selectedCoursesHeaderList
+    , timePlaceListToString
+    , timeSlots
+    )
 
-import Api exposing (Class, Course, TimePlace)
+import Api exposing (Class, Course, CourseID, TimePlace)
 import List.Extra exposing (unique)
 
 
@@ -31,6 +39,11 @@ timeSlots =
 selectableClassHeader : List String
 selectableClassHeader =
     [ "Turma", "Vagas Ocupadas", "Professores", "Salas" ]
+
+
+selectedCoursesHeaderList : List String
+selectedCoursesHeaderList =
+    [ "Código", "Turma", "Período" ]
 
 
 courseToString : Course -> String

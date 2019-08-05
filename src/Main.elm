@@ -6,7 +6,16 @@ import Html exposing (Html, datalist, div, input, option, p, select, table, td, 
 import Html.Attributes exposing (disabled, id, list, value)
 import Html.Events exposing (onInput)
 import Platform exposing (Program)
-import Utils exposing (classToOccupiedString, courseToString, schoolDays, selectableClassHeader, timePlaceListToString, timeSlots)
+import Utils
+    exposing
+        ( classToOccupiedString
+        , courseToString
+        , schoolDays
+        , selectableClassHeader
+        , selectedCoursesHeaderList
+        , timePlaceListToString
+        , timeSlots
+        )
 
 
 main : Program () Model Msg
@@ -27,6 +36,7 @@ type alias Model =
     , availableCourses : List Course
     , courseSearchAvailable : Bool
     , selectedCourse : Maybe Course
+    , selectedCourses : List Course
     , availableClasses : List Class
     , selectedClass : Maybe Class
     }
@@ -48,6 +58,7 @@ init =
       , availableCourses = []
       , courseSearchAvailable = True
       , selectedCourse = Nothing
+      , selectedCourses = []
       , availableClasses = []
       , selectedClass = Nothing
       }
@@ -129,7 +140,7 @@ update msg model =
                     )
             of
                 Just course ->
-                    ( { model | selectedCourse = Just course }
+                    ( { model | selectedCourse = Just course, selectedCourses = model.selectedCourses ++ [ course ] }
                     , Cmd.map GotApiResponse
                         (Api.fetchClasses course.id model.selectedSemester)
                     )
@@ -190,6 +201,23 @@ view model =
                     selectableClassesList
                 )
 
+        selectedCoursesHeader =
+            List.map (\header -> th [] [ text header ]) selectedCoursesHeaderList
+
+        selectedCoursesList =
+            List.map
+                (\course ->
+                    tr []
+                        [ td [] [ text course.id ]
+                        , td [] []
+                        , td [] [ text (Maybe.withDefault "" model.selectedSemester) ]
+                        ]
+                )
+                model.selectedCourses
+
+        selectedCoursesTable =
+            table [] (List.append selectedCoursesHeader selectedCoursesList)
+
         mainGridHeader =
             tr []
                 (List.append
@@ -212,6 +240,7 @@ view model =
     div [ id "main" ]
         [ p [] [ semesterSelector, campusSelector ]
         , courseSearchField
+        , div [] [ selectedCoursesTable ]
         , div [] [ mainGrid ]
         , div [] [ selectableClassesTable ]
         ]
