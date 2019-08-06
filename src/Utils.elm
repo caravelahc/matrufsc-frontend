@@ -8,7 +8,7 @@ module Utils exposing
     , timeSlots
     )
 
-import Api exposing (Class, Course, CourseID, TimePlace)
+import Api exposing (Class, Course, TimePlace)
 import List.Extra exposing (unique)
 
 

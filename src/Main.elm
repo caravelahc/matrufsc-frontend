@@ -189,7 +189,7 @@ view model =
                         [ td [] [ text class.id ]
                         , td [] [ text (classToOccupiedString class) ]
                         , td [] [ text (String.join "\n" class.professors) ]
-                        , td [] [ text (timePlaceListToString class.times_and_places) ]
+                        , td [] [ text (timePlaceListToString class.timesAndPlaces) ]
                         ]
                 )
                 model.availableClasses
