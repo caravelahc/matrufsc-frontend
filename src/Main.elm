@@ -140,7 +140,7 @@ update msg model =
                     )
             of
                 Just course ->
-                    ( { model | selectedCourse = Just course, selectedCourses = model.selectedCourses ++ [ course ] }
+                    ( { model | selectedCourse = Just course, selectedCourses = course :: model.selectedCourses }
                     , Cmd.map GotApiResponse
                         (Api.fetchClasses course.id model.selectedSemester)
                     )
