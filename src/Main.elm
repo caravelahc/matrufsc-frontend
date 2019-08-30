@@ -2,6 +2,7 @@ module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Api exposing (ApiResponse(..), Class, Course)
 import Browser
+import Grid
 import Html exposing (Html, datalist, div, input, option, p, select, table, td, text, th, tr)
 import Html.Attributes exposing (disabled, id, list, value)
 import Html.Events exposing (onInput)
@@ -29,7 +30,8 @@ main =
 
 
 type alias Model =
-    { availableSemesters : List String
+    { grid : Grid.Model
+    , availableSemesters : List String
     , selectedSemester : Maybe String
     , availableCampi : List String
     , selectedCampus : Maybe String
@@ -44,6 +46,7 @@ type alias Model =
 
 type Msg
     = GotApiResponse ApiResponse
+    | GridMsg Grid.Msg
     | SelectSemester String
     | SelectCampus String
     | ChangeCourseQuery String
@@ -51,7 +54,8 @@ type Msg
 
 init : ( Model, Cmd Msg )
 init =
-    ( { availableSemesters = []
+    ( { grid = Grid.init
+      , availableSemesters = []
       , selectedSemester = Nothing
       , availableCampi = []
       , selectedCampus = Nothing
@@ -96,6 +100,13 @@ update msg model =
                     ( { model | availableClasses = Result.withDefault [] result }
                     , Cmd.none
                     )
+
+        GridMsg m ->
+            let
+                gridModel =
+                    Grid.update m model.grid
+            in
+            ( { model | grid = Tuple.first gridModel }, Cmd.none )
 
         SelectSemester s ->
             let
@@ -217,30 +228,11 @@ view model =
 
         selectedCoursesTable =
             table [] (List.append selectedCoursesHeader selectedCoursesList)
-
-        mainGridHeader =
-            tr []
-                (List.append
-                    [ tr [] [ text "" ] ]
-                    (List.map
-                        (\d -> th [] [ text d ])
-                        schoolDays
-                    )
-                )
-
-        mainGridTimeSlots =
-            tr [] (List.map (\t -> tr [] [ text t ]) timeSlots)
-
-        mainGrid =
-            table []
-                [ mainGridHeader
-                , mainGridTimeSlots
-                ]
     in
     div [ id "main" ]
         [ p [] [ semesterSelector, campusSelector ]
         , courseSearchField
         , div [] [ selectedCoursesTable ]
-        , div [] [ mainGrid ]
+        , Html.map GridMsg Grid.mainGrid
         , div [] [ selectableClassesTable ]
         ]
