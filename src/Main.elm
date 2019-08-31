@@ -2,11 +2,21 @@ module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Api exposing (ApiResponse(..), Class, Course)
 import Browser
-import Html exposing (Html, datalist, div, input, option, p, select, table, text, th, tr)
+import Grid
+import Html exposing (Html, datalist, div, input, option, p, select, table, td, text, th, tr)
 import Html.Attributes exposing (disabled, id, list, value)
 import Html.Events exposing (onInput)
 import Platform exposing (Program)
-import Utils exposing (courseToString, schoolDays, timeSlots)
+import Utils
+    exposing
+        ( classToOccupiedString
+        , courseToString
+        , schoolDays
+        , selectableClassHeader
+        , selectedCoursesHeaderList
+        , timePlaceListToString
+        , timeSlots
+        )
 
 
 main : Program () Model Msg
@@ -20,13 +30,15 @@ main =
 
 
 type alias Model =
-    { availableSemesters : List String
+    { grid : Grid.Model
+    , availableSemesters : List String
     , selectedSemester : Maybe String
     , availableCampi : List String
     , selectedCampus : Maybe String
     , availableCourses : List Course
     , courseSearchAvailable : Bool
     , selectedCourse : Maybe Course
+    , selectedCourses : List Course
     , availableClasses : List Class
     , selectedClass : Maybe Class
     }
@@ -34,6 +46,7 @@ type alias Model =
 
 type Msg
     = GotApiResponse ApiResponse
+    | GridMsg Grid.Msg
     | SelectSemester String
     | SelectCampus String
     | ChangeCourseQuery String
@@ -41,13 +54,15 @@ type Msg
 
 init : ( Model, Cmd Msg )
 init =
-    ( { availableSemesters = []
+    ( { grid = Grid.init
+      , availableSemesters = []
       , selectedSemester = Nothing
       , availableCampi = []
       , selectedCampus = Nothing
       , availableCourses = []
       , courseSearchAvailable = True
       , selectedCourse = Nothing
+      , selectedCourses = []
       , availableClasses = []
       , selectedClass = Nothing
       }
@@ -85,6 +100,13 @@ update msg model =
                     ( { model | availableClasses = Result.withDefault [] result }
                     , Cmd.none
                     )
+
+        GridMsg m ->
+            let
+                gridModel =
+                    Grid.update m model.grid
+            in
+            ( { model | grid = Tuple.first gridModel }, Cmd.none )
 
         SelectSemester s ->
             let
@@ -129,7 +151,7 @@ update msg model =
                     )
             of
                 Just course ->
-                    ( { model | selectedCourse = Just course }
+                    ( { model | selectedCourse = Just course, selectedCourses = course :: model.selectedCourses }
                     , Cmd.map GotApiResponse
                         (Api.fetchClasses course.id model.selectedSemester)
                     )
@@ -168,31 +190,49 @@ view model =
                     (List.map (opt << courseToString) model.availableCourses)
                 ]
 
-        classesList =
-            List.map (\c -> p [] [ text c.id ]) model.availableClasses
+        selectableClassesHeader =
+            List.map (\header -> th [] [ text header ]) selectableClassHeader
 
-        mainGridHeader =
-            tr []
+        selectableClassesList =
+            List.map
+                (\class ->
+                    tr []
+                        [ td [] [ text class.id ]
+                        , td [] [ text (classToOccupiedString class) ]
+                        , td [] [ text (String.join "\n" class.professors) ]
+                        , td [] [ text (timePlaceListToString class.timesAndPlaces) ]
+                        ]
+                )
+                model.availableClasses
+
+        selectableClassesTable =
+            table []
                 (List.append
-                    [ tr [] [ text "" ] ]
-                    (List.map
-                        (\d -> th [] [ text d ])
-                        schoolDays
-                    )
+                    selectableClassesHeader
+                    selectableClassesList
                 )
 
-        mainGridTimeSlots =
-            tr [] (List.map (\t -> tr [] [ text t ]) timeSlots)
+        selectedCoursesHeader =
+            List.map (\header -> th [] [ text header ]) selectedCoursesHeaderList
 
-        mainGrid =
-            table []
-                [ mainGridHeader
-                , mainGridTimeSlots
-                ]
+        selectedCoursesList =
+            List.map
+                (\course ->
+                    tr []
+                        [ td [] [ text course.id ]
+                        , td [] []
+                        , td [] [ text (Maybe.withDefault "" model.selectedSemester) ]
+                        ]
+                )
+                model.selectedCourses
+
+        selectedCoursesTable =
+            table [] (List.append selectedCoursesHeader selectedCoursesList)
     in
-    div []
+    div [ id "main" ]
         [ p [] [ semesterSelector, campusSelector ]
         , courseSearchField
-        , div [] classesList
-        , div [] [ mainGrid ]
+        , div [] [ selectedCoursesTable ]
+        , Html.map GridMsg Grid.mainGrid
+        , div [] [ selectableClassesTable ]
         ]

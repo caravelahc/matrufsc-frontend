@@ -26,6 +26,7 @@ module Api exposing
 
 import Http
 import Json.Decode as D exposing (Decoder)
+import Json.Decode.Pipeline as D exposing (required)
 import Url.Builder exposing (QueryParameter, crossOrigin)
 
 
@@ -81,11 +82,10 @@ type alias Course =
 
 courseDecoder : Decoder Course
 courseDecoder =
-    D.map3
-        Course
-        (D.field "id" D.string)
-        (D.field "name" D.string)
-        (D.field "class_hours" D.int)
+    D.succeed Course
+        |> required "id" D.string
+        |> required "name" D.string
+        |> required "class_hours" D.int
 
 
 fetchCourses : Maybe String -> Maybe String -> Cmd ApiResponse
@@ -253,37 +253,37 @@ type alias TimePlace =
 
 timePlaceDecoder : Decoder TimePlace
 timePlaceDecoder =
-    D.map3
-        TimePlace
-        (D.field "weekday" weekDayDecoder)
-        (D.field "slots" (D.list slotDecoder))
-        (D.field "room" D.string)
+    D.succeed TimePlace
+        |> required "weekday" weekDayDecoder
+        |> required "slots" (D.list slotDecoder)
+        |> required "room" D.string
 
 
 type alias Class =
     { id : ClassID
+    , courseID : CourseID
     , labels : List String
     , capacity : Int
     , enrolled : Int
     , special : Int
     , waiting : Maybe Int
-    , times_and_places : List TimePlace
+    , timesAndPlaces : List TimePlace
     , professors : List String
     }
 
 
 classDecoder : Decoder Class
 classDecoder =
-    D.map8
-        Class
-        (D.field "id" D.string)
-        (D.field "labels" (D.list D.string))
-        (D.field "capacity" D.int)
-        (D.field "enrolled" D.int)
-        (D.field "special" D.int)
-        (D.field "waiting" (D.nullable D.int))
-        (D.field "times_and_places" (D.list timePlaceDecoder))
-        (D.field "professors" (D.list D.string))
+    D.succeed Class
+        |> required "id" D.string
+        |> required "course_id" D.string
+        |> required "labels" (D.list D.string)
+        |> required "capacity" D.int
+        |> required "enrolled" D.int
+        |> required "special" D.int
+        |> required "waiting" (D.nullable D.int)
+        |> required "times_and_places" (D.list timePlaceDecoder)
+        |> required "professors" (D.list D.string)
 
 
 fetchClasses : CourseID -> Maybe String -> Cmd ApiResponse
